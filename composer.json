@@ -1,0 +1,19 @@
+{
+    "name": "rimelek/i18n",
+    "description": "Library for multilingual PHP applications to choose a language",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Takács Ákos",
+            "email": "rimelek@rimelek.hu",
+            "homepage": "http://rimelek.hu"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Rimelek\\I18n\\": "src/"
+        }
+        
+    }
+}
