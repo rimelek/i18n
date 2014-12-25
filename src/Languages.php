@@ -58,8 +58,15 @@ class Languages implements \ArrayAccess
      */
     private $category = null;
 
+    /**
+     * The name of the variable which contains the translations
+     * 
+     * E.g. $lang or $language or $locale withoit dollar
+     *
+     * @var string
+     */
     private $nameOfLanguageVariable = self::LANGVAR_DEFAULT;
-    
+
     /**
      * Get the instance
      *
@@ -86,17 +93,36 @@ class Languages implements \ArrayAccess
         $this->category = $category;
     }
 
+    /**
+     * Set the name of the variable which contains the translations
+     * 
+     * E.g. $lang or $language or $locale withoit dollar
+     * 
+     * $lang by default
+     * 
+     * @param string $nameOfLanguageVariable New name
+     * @return static
+     */
     public function setNameOfLanguageVariable($nameOfLanguageVariable)
     {
         $this->nameOfLanguageVariable = $nameOfLanguageVariable;
         return $this;
     }
-    
+
+    /**
+     * Get the name of the variable which contains the translations
+     * 
+     * E.g. $lang or $language or $locale withoit dollar
+     * 
+     * $lang by default
+     * 
+     * @return string
+     */
     public function getNameOfLanguageVariable()
     {
         return $this->nameOfLanguageVariable;
     }
-    
+
     /**
      * Get the category of translations
      * 
@@ -166,56 +192,117 @@ class Languages implements \ArrayAccess
         return new Language($langcode);
     }
 
+    /**
+     * Checking of existence of a language file in subdirectory by language code
+     * 
+     * @param string $langcode
+     * @return boolean
+     */
     private function isFileExistsInSubDir($langcode)
     {
         return file_exists($this->getFilePathInSubDir($langcode));
     }
 
+    /**
+     * Checking of existence of a language file with category suffix by language code
+     * 
+     * @param string $langcode
+     * @return boolean
+     */
     private function isFileExistsWithSuffix($langcode)
     {
         return file_exists($this->getFilePathWithSuffix($langcode));
     }
 
+    /**
+     * Checking of existence of a language file without suffix by language code
+     * 
+     * If there is no category suffix, then the file contains of texts of
+     * the default category
+     * 
+     * @param string $langcode
+     * @return boolean
+     */
     private function isFileExistsWithoutSuffix($langcode)
     {
         return file_exists($this->getFilePathWithoutSuffix($langcode));
     }
-    
+
+    /**
+     * Get the path of a language file in subdirectory by language code
+     * 
+     * @param string $langcode
+     * @return string
+     */
     public function getFilePathInSubDir($langcode)
     {
         return $this->getPath() . $langcode . '/' . $this->getCategory() . '.php';
     }
-    
+
+    /**
+     * Get the path of a language file without suffix by language code
+     * 
+     * @param string $langcode
+     * @return string
+     */
     public function getFilePathWithoutSuffix($langcode)
     {
         return $this->getPath() . $langcode . '.php';
     }
-    
+
+    /**
+     * Get the path of a language file with suffix by language code
+     * 
+     * @param string $langcode
+     * @return string
+     */
     public function getFilePathWithSuffix($langcode)
     {
         return $this->getPath() . $langcode . '-' . $this->getCategory() . '.php';
     }
-    
+
+    /**
+     * Load the translations into the category from the language file in a subdirectory
+     * 
+     * @param string $langcode
+     */
     private function loadFromFileInSubDir($langcode)
     {
         $this->loadIntoCategory($this, $this->getFilePathInSubDir($langcode), $langcode);
     }
-    
+
+    /**
+     * Load the translations into the category from the language file with category suffix
+     * 
+     * @param string $langcode
+     */
     private function loadFromFileWithSuffix($langcode)
     {
         $this->loadIntoCategory($this, $this->getFilePathWithSuffix($langcode), $langcode);
     }
 
+    /**
+     * Load the translations into the category from the language file without category suffix
+     * 
+     * @param string $langcode
+     */
     private function loadFromFileWithoutSuffix($langcode)
     {
         $this->loadIntoCategory($this, $this->getFilePathWithoutSuffix($langcode), $langcode);
     }
-    
+
     /**
+     * Load the translations into the category from a file by the given path
      * 
-     * @param self $object
-     * @param string $path
-     * @param string $langcode
+     * Each argument of this method is accessed by func_get_arg() to avoid
+     * using any variable in the context of the translations.
+     * 
+     * The method is static, because this way the variable '$this' is not
+     * available in any language file.  
+     * 
+     * @param self $object An instance of this class
+     * @param string $path The path where the language file can be found
+     * @param string $langcode The language code of the choosen language
      */
     private static function loadIntoCategory()
     {
@@ -223,7 +310,7 @@ class Languages implements \ArrayAccess
         require_once func_get_arg(1);
         if (isset(${func_get_arg(0)->getNameOfLanguageVariable()})) {
             func_get_arg(0)->lang[func_get_arg(2)][func_get_arg(0)->getCategory()] = ${func_get_arg(0)->getNameOfLanguageVariable()};
-        }  
+        }
     }
 
     /**
@@ -248,8 +335,8 @@ class Languages implements \ArrayAccess
      */
     public function offsetGet($langcode)
     {
-        $noDefaultVersion = $this->getDefault() !== $langcode 
-            and !isset($this->lang[$this->getDefault()][$this->getCategory()]);
+        $noDefaultVersion = $this->getDefault() !== $langcode
+            and ! isset($this->lang[$this->getDefault()][$this->getCategory()]);
         if (!isset($this->lang[$langcode][$this->getCategory()])) {
             if ($this->isFileExistsInSubDir($langcode)) {
                 $this->loadFromFileInSubDir($langcode);
