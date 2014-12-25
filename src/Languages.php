@@ -17,12 +17,15 @@ use Exception;
 class Languages implements \ArrayAccess
 {
 
+    const CATEGORY_DEFAULT = 'default';
+    const LANGVAR_DEFAULT = 'lang';
+
     /**
-     * The instance of the class
+     * The instances of the class
      * 
-     * @var Languages
+     * @var static[]
      */
-    private static $instance = null;
+    private static $instances = array();
 
     /**
      * Two dimensional array of translations
@@ -49,27 +52,59 @@ class Languages implements \ArrayAccess
     private $path = 'languages';
 
     /**
+     * The category of translations
+     *
+     * @var string
+     */
+    private $category = null;
+
+    private $nameOfLanguageVariable = self::LANGVAR_DEFAULT;
+    
+    /**
      * Get the instance
      *
-     * @return Languages
+     * @param string $category The category of translations
+     * @return static
      */
-    public static function getInstance()
+    public static function getInstance($category = self::CATEGORY_DEFAULT)
     {
-        if (self::$instance === null) {
-            $class = __CLASS__;
-            self::$instance = new $class();
+        if (!isset(self::$instances[$category])) {
+            self::$instances[$category] = new static($category);
         }
-        return self::$instance;
+        return self::$instances[$category];
     }
 
     /**
      * Constructor
      *
      * You can instantiate the class using the {@link getInstance()} method
+     * 
+     * @param string $category The category of translations
      */
-    private function __construct()
+    private function __construct($category)
     {
-        
+        $this->category = $category;
+    }
+
+    public function setNameOfLanguageVariable($nameOfLanguageVariable)
+    {
+        $this->nameOfLanguageVariable = $nameOfLanguageVariable;
+        return $this;
+    }
+    
+    public function getNameOfLanguageVariable()
+    {
+        return $this->nameOfLanguageVariable;
+    }
+    
+    /**
+     * Get the category of translations
+     * 
+     * @return string
+     */
+    public function getCategory()
+    {
+        return $this->category;
     }
 
     /**
@@ -90,7 +125,7 @@ class Languages implements \ArrayAccess
      */
     public function setPath($path)
     {
-        $this->path = $path;
+        $this->path = rtrim($path ? : '.', '/') . '/';
         return $this;
     }
 
@@ -119,7 +154,7 @@ class Languages implements \ArrayAccess
     /**
      * Get the instance of Language by a language code
      *
-     * This way yue get an object which is able to handle the case when
+     * This way you get an object which is able to handle the case when
      * a text has no translation in the choosen language, but it is
      * available in the default language.
      *
@@ -131,6 +166,66 @@ class Languages implements \ArrayAccess
         return new Language($langcode);
     }
 
+    private function isFileExistsInSubDir($langcode)
+    {
+        return file_exists($this->getFilePathInSubDir($langcode));
+    }
+
+    private function isFileExistsWithSuffix($langcode)
+    {
+        return file_exists($this->getFilePathWithSuffix($langcode));
+    }
+
+    private function isFileExistsWithoutSuffix($langcode)
+    {
+        return file_exists($this->getFilePathWithoutSuffix($langcode));
+    }
+    
+    public function getFilePathInSubDir($langcode)
+    {
+        return $this->getPath() . $langcode . '/' . $this->getCategory() . '.php';
+    }
+    
+    public function getFilePathWithoutSuffix($langcode)
+    {
+        return $this->getPath() . $langcode . '.php';
+    }
+    
+    public function getFilePathWithSuffix($langcode)
+    {
+        return $this->getPath() . $langcode . '-' . $this->getCategory() . '.php';
+    }
+    
+    private function loadFromFileInSubDir($langcode)
+    {
+        $this->loadIntoCategory($this, $this->getFilePathInSubDir($langcode), $langcode);
+    }
+    
+    private function loadFromFileWithSuffix($langcode)
+    {
+        $this->loadIntoCategory($this, $this->getFilePathWithSuffix($langcode), $langcode);
+    }
+
+    private function loadFromFileWithoutSuffix($langcode)
+    {
+        $this->loadIntoCategory($this, $this->getFilePathWithoutSuffix($langcode), $langcode);
+    }
+    
+    /**
+     * 
+     * @param self $object
+     * @param string $path
+     * @param string $langcode
+     */
+    private static function loadIntoCategory()
+    {
+        //func_get_arg to avoid override any variable or access to $this from language file 
+        require_once func_get_arg(1);
+        if (isset(${func_get_arg(0)->getNameOfLanguageVariable()})) {
+            func_get_arg(0)->lang[func_get_arg(2)][func_get_arg(0)->getCategory()] = ${func_get_arg(0)->getNameOfLanguageVariable()};
+        }  
+    }
+
     /**
      * Checking of existence of a language by language code
      *
@@ -139,7 +234,10 @@ class Languages implements \ArrayAccess
      */
     public function offsetExists($langcode)
     {
-        return file_exists(rtrim($this->path, '/') . '/' . strtolower($langcode) . '.php');
+        return (isset($this->lang[$langcode][$this->category])
+            or $this->isFileExistsInSubDir($langcode)
+            or $this->isFileExistsWithSuffix($langcode)
+            or $this->isFileExistsWithoutSuffix($langcode));
     }
 
     /**
@@ -150,20 +248,28 @@ class Languages implements \ArrayAccess
      */
     public function offsetGet($langcode)
     {
-        $offset = strtolower($langcode);
-        $dir = rtrim($this->path, '/') . '/';
-        if (!isset($this->lang[$offset])) {
-            if (!file_exists($dir . $offset . '.php')) {
-                $offset = $this->default;
+        $noDefaultVersion = $this->getDefault() !== $langcode 
+            and !isset($this->lang[$this->getDefault()][$this->getCategory()]);
+        if (!isset($this->lang[$langcode][$this->getCategory()])) {
+            if ($this->isFileExistsInSubDir($langcode)) {
+                $this->loadFromFileInSubDir($langcode);
+            } elseif ($this->isFileExistsWithSuffix($langcode)) {
+                $this->loadFromFileWithSuffix($langcode);
+            } elseif ($this->isFileExistsWithoutSuffix($langcode)) {
+                $this->loadFromFileWithoutSuffix($langcode);
+            } elseif ($noDefaultVersion and $this->isFileExistsInSubDir($this->getDefault())) {
+                $langcode = $this->getDefault();
+                $this->loadFromFileInSubDir($langcode);
+            } elseif ($noDefaultVersion and $this->isFileExistsWithSuffix($this->getDefault())) {
+                $langcode = $this->getDefault();
+                $this->loadFromFileWithSuffix($langcode);
+            } elseif ($noDefaultVersion and $this->isFileExistsWithoutSuffix($this->getDefault())) {
+                $langcode = $this->getDefault();
+                $this->loadFromFileWithoutSuffix($langcode);
             }
-            if (!isset($this->lang[$offset])) {
-                require_once $dir . $offset . '.php';
-            } else {
-                $lang = $this->lang[$offset];
-            }
-            $this->lang[$offset] = $lang;
         }
-        return $this->lang[$offset];
+
+        return $this->lang[$langcode][$this->getCategory()];
     }
 
     /**

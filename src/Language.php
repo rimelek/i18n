@@ -24,13 +24,21 @@ class Language implements \ArrayAccess
     private $code;
 
     /**
+     * The category of translations
+     *
+     * @var string
+     */
+    private $category = null;
+
+    /**
      * 
      *
      * @param string $code The code of the language
      */
-    public function __construct($code = null)
+    public function __construct($code = null, $category = Languages::CATEGORY_DEFAULT)
     {
-        $this->code = $code ? : Languages::getInstance()->getDefault();
+        $this->category = $category;
+        $this->code = $code ? : Languages::getInstance($category)->getDefault();
     }
 
     /**
@@ -41,7 +49,7 @@ class Language implements \ArrayAccess
      */
     public function offsetExists($key)
     {
-        $langs = Languages::getInstance();
+        $langs = Languages::getInstance($this->getCategory());
         return isset($langs[$this->code][$key]);
     }
 
@@ -54,7 +62,7 @@ class Language implements \ArrayAccess
      */
     public function offsetGet($key)
     {
-        $langs = Languages::getInstance();
+        $langs = Languages::getInstance($this->getCategory());
         return (isset($langs[$this->code][$key])) ?
             $langs[$this->code][$key] :
             $langs[$langs->getDefault()][$key];
@@ -89,6 +97,16 @@ class Language implements \ArrayAccess
     public function getCode()
     {
         return $this->code;
+    }
+
+    /**
+     * Get the category of translations
+     * 
+     * @return string 
+     */
+    public function getCategory()
+    {
+        return $this->category;
     }
 
 }

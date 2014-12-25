@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Rimelek\I18n\Languages;
 
-$languages = Languages::getInstance();
+$languages = Languages::getInstance()->setNameOfLanguageVariable('locale');
 $languages->setPath(__DIR__ . '/languages');
 $languages->setDefault('en');
 
