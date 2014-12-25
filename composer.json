@@ -2,6 +2,7 @@
     "name": "rimelek/i18n",
     "description": "Library for multilingual PHP applications to choose a language",
     "license": "MIT",
+    "version": "2.0.0-alpha.1",
     "authors": [
         {
             "name": "Takács Ákos",
