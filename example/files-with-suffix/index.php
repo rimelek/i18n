@@ -3,9 +3,13 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Rimelek\I18n\Languages;
 
+Languages::setGlobalPath(__DIR__ . '/languages');
+Languages::setGlobalDefault('en');
+
 $languages = Languages::getInstance();
-$languages->setPath(__DIR__ . '/languages');
-$languages->setDefault('en');
+////You can override global settings
+//$languages->setPath(__DIR__ . '/../../languages');
+//$languages->setDefault('hu');
 
 echo $languages['en']['welcome'] . "\n";
 echo $languages['hu']['welcome'] . "\n";

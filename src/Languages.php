@@ -28,6 +28,29 @@ class Languages implements \ArrayAccess
     private static $instances = array();
 
     /**
+     * The global default language's code
+     * 
+     * @var string 
+     */
+    private static $globalDefault = 'en';
+    
+    /**
+     * The global path where the language files are located
+     * 
+     * @var string|null
+     */
+    private static $globalNameOfLanguageVariable = self::LANGVAR_DEFAULT;
+    
+    /**
+     * The global name of the variable which contains the translations
+     * 
+     * E.g. $lang or $language or $locale withoit dollar
+     *
+     * @var string|null
+     */
+    private static $globalPath = 'languages';
+    
+    /**
      * Two dimensional array of translations
      *
      * The key is the language code.
@@ -40,16 +63,16 @@ class Languages implements \ArrayAccess
     /**
      * The default language's code
      * 
-     * @var string
+     * @var string|null
      */
-    private $default = 'en';
+    private $default = null;
 
     /**
      * The path where the language files are located
      * 
-     * @var string
+     * @var string|null
      */
-    private $path = 'languages';
+    private $path = null;
 
     /**
      * The category of translations
@@ -63,9 +86,9 @@ class Languages implements \ArrayAccess
      * 
      * E.g. $lang or $language or $locale withoit dollar
      *
-     * @var string
+     * @var string|null
      */
-    private $nameOfLanguageVariable = self::LANGVAR_DEFAULT;
+    private $nameOfLanguageVariable = null;
 
     /**
      * Get the instance
@@ -94,6 +117,76 @@ class Languages implements \ArrayAccess
     }
 
     /**
+     * Get the global language code of the default language
+     *
+     * @return string
+     */
+    public static function getGlobalDefault()
+    {
+        return self::$globalDefault;
+    }
+
+    /**
+     * Get the global name of the variable which contains the translations
+     * 
+     * E.g. $lang or $language or $locale withoit dollar
+     * 
+     * $lang by default
+     * 
+     * @return string
+     */
+    public static function getGlobalNameOfLanguageVariable()
+    {
+        return self::$globalNameOfLanguageVariable;
+    }
+
+    /**
+     * Get the global path of the language files
+     *
+     * @return string
+     */
+    public static function getGlobalPath()
+    {
+        return self::$globalPath;
+    }
+
+    /**
+     * Set the language code of the default language
+     *
+     * @param string $langcode
+     */
+    public static function setGlobalDefault($langcode)
+    {
+        self::$globalDefault = $langcode;
+    }
+
+    
+    /**
+     * Set the global name of the variable which contains the translations
+     * 
+     * E.g. $lang or $language or $locale withoit dollar
+     * 
+     * $lang by default
+     * 
+     * @param string $globalNameOfLanguageVariable New name
+     */
+    public static function setGlobalNameOfLanguageVariable($globalNameOfLanguageVariable)
+    {
+        self::$globalNameOfLanguageVariable = $globalNameOfLanguageVariable;
+    }
+
+    /**
+     * Set the path of the language files
+     *
+     * @param string $globalPath The language files will be search in this folder
+     */
+    public static function setGlobalPath($globalPath)
+    {
+        self::$globalPath = rtrim($globalPath ? : '.', '/') . '/';
+    }
+
+        
+    /**
      * Set the name of the variable which contains the translations
      * 
      * E.g. $lang or $language or $locale withoit dollar
@@ -120,7 +213,7 @@ class Languages implements \ArrayAccess
      */
     public function getNameOfLanguageVariable()
     {
-        return $this->nameOfLanguageVariable;
+        return $this->nameOfLanguageVariable ? : self::getGlobalNameOfLanguageVariable();
     }
 
     /**
@@ -140,7 +233,7 @@ class Languages implements \ArrayAccess
      */
     public function getPath()
     {
-        return $this->path;
+        return $this->path ? : self::getGlobalPath();
     }
 
     /**
@@ -162,7 +255,7 @@ class Languages implements \ArrayAccess
      */
     public function getDefault()
     {
-        return $this->default;
+        return $this->default ? : self::getGlobalDefault();
     }
 
     /**

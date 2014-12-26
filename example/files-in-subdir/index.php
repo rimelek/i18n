@@ -3,9 +3,13 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Rimelek\I18n\Languages;
 
+Languages::setGlobalPath(__DIR__ . '/languages');
+Languages::setGlobalDefault('en');
+
 $languages = Languages::getInstance();
-$languages->setPath(__DIR__ . '/languages');
-$languages->setDefault('en');
+////You can override global settings
+//$languages->setPath(__DIR__ . '/../../languages');
+//$languages->setDefault('hu');
 
 echo $languages['en']['welcome'] . "\n";
 echo $languages['hu']['welcome'] . "\n";
@@ -27,3 +31,17 @@ echo $nal['welcome'] . "\n";
 //output:
 //Welcome to this site
 
+//You can get instance of news texts at the same time
+$newstexts = Languages::getInstance('news');
+$newstexts->setPath(__DIR__ . '/languages');
+$newstexts->setDefault('en');
+
+echo "\n" . $newstexts['hu']['welcome'];
+//output:
+//Üdvüzöllek a hírek oldalon
+
+//You can use unlimited subdirectory. The last part of the 
+//category is the filename without extension.
+$admintexts = Languages::getInstance('admin/settings');
+
+echo "\n" . $admintexts['en']['site_name'];
