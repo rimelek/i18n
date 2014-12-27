@@ -400,8 +400,9 @@ class Languages implements \ArrayAccess
     private static function loadIntoCategory()
     {
         //func_get_arg to avoid override any variable or access to $this from language file 
+        ${func_get_arg(0)->getNameOfLanguageVariable()} = array();
         require_once func_get_arg(1);
-        if (isset(${func_get_arg(0)->getNameOfLanguageVariable()})) {
+        if (!empty(${func_get_arg(0)->getNameOfLanguageVariable()})) {
             func_get_arg(0)->lang[func_get_arg(2)][func_get_arg(0)->getCategory()] = ${func_get_arg(0)->getNameOfLanguageVariable()};
         }
     }
